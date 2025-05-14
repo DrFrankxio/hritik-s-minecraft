@@ -1,0 +1,197 @@
+<!--
+	Made new game button have a high z-index
+	
+	Moved addeventlistener for exit and save button at line 303 roughly
+	Created a function, saveWorld, and put it below addeventlistener mentioned above
+	Imported FileSaver.js
+
+	Added loadGameButton variable in line 191 around
+	Put the whole game in a function with a parameter (what was under newgame event listener) and then put newgame event listener above it
+	Added eventlistener for load game
+	Added input element in title screen GUI in HTML section, accepts only json
+	Created inputFile variable
+	Made it so that when you click the load game, that input HTML element shows up
+	Created loadedData variable
+	Created eventlistener for when user puts a file (change event)
+	Created code inside the change event (from above) for reading the file and created a new function below called logFile which is called
+	Inside the logFile function, added code for making the loadedData variable contain all the loaded data and also called the game("load") function
+	
+	Put if statement for if newOrLoad == load at the very start of game function
+	Moved these variables to the very start of the game function:
+		var worldGen = Math.random();
+	 	var biomeGen = Math.random();
+	 	var treesGen = Math.random();
+
+	 	var chunks = [];
+		var xoff = 0;
+		var zoff = 0;
+		var inc = 0.05;
+		var amplitude = 30 + (Math.random() * 70);
+		var renderDistance = 4;
+		var chunkSize = 10;
+		var depth = 5; // keeps track of the depth of the world (in terms of blocks)
+		var minWorldY = -250; // the minimum y coordinate of a block
+		var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+		camera.position.x = renderDistance * chunkSize / 2 * 5;
+		camera.position.z = renderDistance * chunkSize / 2 * 5;
+		camera.position.y = 50;
+		
+		var placedBlocks = [];
+		var brokenBlocks = [];
+	Made code for editing these variables based on loadedData in same place
+
+	Added placedBlocks code at the end of for-z loop in initial chunk generation code!
+
+	Adding the resetting pictureCount variable using if statement in line roughly 200
+
+	Broken Blocks in initial chunk generation:
+		Added code for broken water just under while()... for water
+		Put code inside the for loop for terrain generation (including trees and leaves), inside an if statement which is inside that for loop and just below the for(var ....), put code for broken blocks!
+-->
+<!DOCTYPE html>
+<html>
+<head>
+	<title>3D Minecraft</title>
+	<style type="text/css">
+		body {
+			margin : 0;
+		}
+		#cursor {
+			position : absolute;
+			width : 3%;
+		}
+		.hotbar {
+			width : 5%;
+			position : absolute;
+			top : 85%;
+			border : 1px solid white;
+			opacity : 0.8;
+		}
+		#slot1 {
+			left : 27.5%;
+		}
+		#slot2 {
+			left : 32.5%;
+		}
+		#slot3 {
+			left : 37.5%;
+		}
+		#slot4 {
+			left : 42.5%;
+		}
+		#slot5 {
+			left : 47.5%;
+		}
+		#slot6 {
+			left : 52.5%;
+		}
+		#slot7 {
+			left : 57.5%;
+		}
+		#slot8 {
+			left : 62.5%;
+		}
+		#slot9 {
+			left : 67.5%;
+		}
+		#gameScreenGUI {
+			display : none;
+		}
+		.titleScreen {
+			position : absolute;
+			top : 0px;
+			left : 0px;
+			width : 100%;
+			height : 100%;
+		}
+		@font-face {
+		  font-family : minecraft;
+		  src : url(minecraftfont.woff);
+		}
+		.startingButtons {
+			position : absolute;
+			width : 15%;
+			height : 10%;
+			left : 42.5%;
+			border-radius : 20px;
+			background : rgb(170, 170, 170);
+			font-size : 18px;
+			font-family : "minecraft";
+			color : white;
+		}
+		#startingLogo {
+			position : absolute;
+			width : 50%;
+			left : 25%;
+		}
+		#escapeScreen {
+			position : absolute;
+			width : 100%;
+			height : 100%;
+			background : rgba(0, 0, 0, 0.1)
+		}
+		#escapeScreenGUI {
+			display : none;
+		}
+		.escapeButtons {
+			position : absolute;
+			width : 15%;
+			height : 10%;
+			left : 42.5%;
+			border-radius : 20px;
+			background : rgb(170, 170, 170);
+			font-size : 18px;
+			font-family : "minecraft";
+			color : white;
+		}
+	</style>
+</head>
+<body>
+
+	<script src = "three.js"></script>
+	<script src = "perlin.js"></script>
+	<script src = "PointerLockControls.js"></script>
+	<script src = "stats.js"></script>
+	<script src = "FileSaver.js"></script>
+
+
+	<div id = "gameScreenGUI">
+		<img src = "texture/cobblestone/cobblestone.png" class = "hotbar" id = "slot1">
+		<img src = "texture/dirt/dirt.png" class = "hotbar" id = "slot2">
+		<img src = "texture/grass/side.jpg" class = "hotbar" id = "slot3">
+		<img src = "texture/oakLeaves/oakLeaves.png" class = "hotbar" id = "slot4">
+		<img src = "texture/oakLog/side.png" class = "hotbar" id = "slot5">
+		<img src = "texture/sand/sand.png" class = "hotbar" id = "slot6">
+		<img src = "texture/glass/glass.png" class = "hotbar" id = "slot7">
+		<img src = "texture/brick/brick.png" class = "hotbar" id = "slot8">
+		<img src = "texture/plank/plank.png" class = "hotbar" id = "slot9">
+
+		<img src = "cursor.png" id = "cursor">
+	</div>
+
+
+	<div id = "titleScreenGUI">
+		<img src = "titleScreen/one.jpeg" class = "titleScreen">
+		<img src = "titleScreen/two.jpeg" class = "titleScreen">
+		<img src = "titleScreen/three.jpeg" class = "titleScreen">
+		<img src = "titleScreen/four.jpeg" class = "titleScreen">
+		<img src = "titleScreen/five.jpeg" class = "titleScreen">
+		<img src = "titleScreen/six.jpeg" class = "titleScreen">
+
+		<button id = "newgame" class = "startingButtons" style = "top : 40%; z-index: 10000;">New Game</button>
+		<button id = "loadgame" class = "startingButtons" style = "top : 55%">Load Game</button>
+		<button id = "options" class = "startingButtons" style = "top : 70%">Options</button>
+		<input type = "file" style = "position: absolute; color: white; display: none" id = "inputFile" accept = ".json">
+
+		<img src = "minecraftlogo.png" id = "startingLogo">
+	</div>
+
+
+	<div id = "escapeScreenGUI">
+		<div id = "escapeScreen"></div>
+		<button id = "options2" class = "escapeButtons" style = "top : 30%">Options</button>
+		<button id = "titlescreensave" class = "escapeButtons" style = "top : 45%">Save and Quit to Title</button>
+	</div>
+	<script src="main.js"></script>
+</body>
+</html>
